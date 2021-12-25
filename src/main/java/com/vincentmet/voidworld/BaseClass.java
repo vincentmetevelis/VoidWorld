@@ -15,23 +15,38 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.world.ForgeWorldPreset;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerLifecycleEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
+
+import java.nio.file.Path;
 
 @Mod(BaseClass.MODID)
 public class BaseClass{
 	public static final String MODID = "voidworld";
+	public static final Path PATH_CONFIG = FMLPaths.CONFIGDIR.get().resolve("voidworld");
+
     public BaseClass(){
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupCommon);
 		MinecraftForge.EVENT_BUS.register(this);
+		MinecraftForge.EVENT_BUS.addListener(this::serverStopping);
 	}
 	
 	private void setupCommon(final FMLCommonSetupEvent event){
     	event.enqueueWork(() -> Registry.register(Registry.CHUNK_GENERATOR, new ResourceLocation(MODID, MODID), EmptyWorldChunkGen.CODEC));
+		Config.readConfigToMemory(PATH_CONFIG, "config.json");
+		PacketHandler.init();
+	}
+
+	private void serverStopping(final ServerStoppingEvent event){
+		Config.writeConfigToDisk(PATH_CONFIG, "config.json");
 	}
 
 	@Mod.EventBusSubscriber(modid = MODID, bus = Bus.MOD)
@@ -59,7 +74,7 @@ public class BaseClass{
 			if(event.getPlayer() instanceof ServerPlayer player){
 				if(player.getStats().getValue(Stats.CUSTOM.get(Stats.LEAVE_GAME)) == 0){
 					if(player.getLevel().getBlockState(player.blockPosition().below()).getBlock().equals(Blocks.AIR)){
-						player.getLevel().setBlock(player.blockPosition().below(), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+						player.getLevel().setBlock(player.blockPosition().below(), Config.SidedConfig.getSpawnBlock().defaultBlockState(), 2);
 					}
 				}
 			}
