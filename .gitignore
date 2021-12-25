@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+out/
+build/
+run/
+serverrun/
+resourcesrun/
+logs/
+*.iml
+.gitattributes
+BaconIdeas.txt

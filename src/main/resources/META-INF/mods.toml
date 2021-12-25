@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[39,)"
+credits="vincentmet"
+license="All Rights Reserved"
+[[mods]]
+modId="voidworld"
+version="1.18.1-1.0.0"
+displayName="Void World"
+description='''
+Voided :D!!!
+'''
