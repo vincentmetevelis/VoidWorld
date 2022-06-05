@@ -15,10 +15,12 @@ import java.nio.file.Path;
 public class Config {
     public static class ServerConfig{
         public static Block SPAWN_BLOCK = Blocks.GRASS_BLOCK;
+        public static int SPAWN_BLOCK_RADIUS = 0;
     }
 
     public static class ServerToClientSyncedConfig{
         public static Block SPAWN_BLOCK = Blocks.GRASS_BLOCK;
+        public static int SPAWN_BLOCK_RADIUS = 0;
     }
 
     public static void processJson(JsonObject json){
@@ -28,6 +30,15 @@ public class Config {
                 JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
                 if(jsonPrimitive.isString()){
                     setSpawnBlock(ResourceLocation.tryParse(jsonPrimitive.getAsString()));
+                }
+            }
+        }
+        if(json.has("spawn_block_radius")){
+            JsonElement jsonElement = json.get("spawn_block_radius");
+            if(jsonElement.isJsonPrimitive()){
+                JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
+                if(jsonPrimitive.isNumber()){
+                    setSpawnBlockRadius(jsonPrimitive.getAsNumber().intValue());
                 }
             }
         }
@@ -45,15 +56,24 @@ public class Config {
         }
     }
 
+    public static void setSpawnBlockRadius(int spawnBlockRadius){
+        ServerConfig.SPAWN_BLOCK_RADIUS = Math.max(spawnBlockRadius, 0);
+    }
+
     public static class SidedConfig{
         public static Block getSpawnBlock(){
             return EffectiveSide.get().isClient() ? ServerToClientSyncedConfig.SPAWN_BLOCK : ServerConfig.SPAWN_BLOCK;
+        }
+
+        public static int getSpawnBlockRadius(){
+            return EffectiveSide.get().isClient() ? ServerToClientSyncedConfig.SPAWN_BLOCK_RADIUS : ServerConfig.SPAWN_BLOCK_RADIUS;
         }
     }
 
     public static JsonObject getJson(){
         JsonObject json = new JsonObject();
         json.addProperty("spawn_block", ServerConfig.SPAWN_BLOCK.getRegistryName().toString());
+        json.addProperty("spawn_block_radius", ServerConfig.SPAWN_BLOCK_RADIUS);
         return json;
     }
 

@@ -2,6 +2,9 @@ package com.vincentmet.voidworld;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
@@ -16,21 +19,23 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.StructureSettings;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class EmptyWorldChunkGen extends ChunkGenerator {
-    public static final Codec<EmptyWorldChunkGen> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-            BiomeSource.CODEC.fieldOf("biome_source").forGetter((gen) -> gen.biomeSource)
-            ).apply(instance, instance.stable(EmptyWorldChunkGen::new)));
+    public static final Codec<EmptyWorldChunkGen> CODEC = RecordCodecBuilder.create((instance) -> {
+        return commonCodec(instance).and(BiomeSource.CODEC.fieldOf("biome_source").forGetter((gen) -> gen.biomeSource)).apply(instance, instance.stable(EmptyWorldChunkGen::new));
+    });
 
-    public EmptyWorldChunkGen(BiomeSource biomeProvider) {
-        super(biomeProvider, new StructureSettings(Optional.empty(), new HashMap<>()));
+    public EmptyWorldChunkGen(Registry<StructureSet> structureSetRegistry, BiomeSource biomeProvider) {
+        super(structureSetRegistry, Optional.empty(), biomeProvider);
+        //super(biomeProvider, biomeProvider.new StructureSettings(Optional.empty(), new HashMap<>()));
     }
 
     @Override
@@ -45,7 +50,7 @@ public class EmptyWorldChunkGen extends ChunkGenerator {
 
     @Override
     public Climate.Sampler climateSampler() {
-        return (x, y, z) -> Climate.target(0, 0, 0, 0, 0, 0);
+        return Climate.empty();
     }
 
     @Override
@@ -77,6 +82,9 @@ public class EmptyWorldChunkGen extends ChunkGenerator {
     public NoiseColumn getBaseColumn(int p_156150_, int p_156151_, LevelHeightAccessor levelHeightAccessor) {
         return new NoiseColumn(0, new BlockState[]{Blocks.AIR.defaultBlockState()});
     }
+
+    @Override
+    public void addDebugScreenInfo(List<String> lines, BlockPos pos) {/*NOOP*/}
 
     @Override
     public void buildSurface(WorldGenRegion worldGenRegion, StructureFeatureManager structureFeatureManager, ChunkAccess chunkAccess) {/*NOOP*/}

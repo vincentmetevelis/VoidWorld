@@ -3,13 +3,14 @@ package com.vincentmet.voidworld;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.level.biome.*;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.world.ForgeWorldPreset;
@@ -25,6 +26,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.nio.file.Path;
 
@@ -73,8 +75,13 @@ public class BaseClass{
 		public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event){
 			if(event.getPlayer() instanceof ServerPlayer player){
 				if(player.getStats().getValue(Stats.CUSTOM.get(Stats.LEAVE_GAME)) == 0){
-					if(player.getLevel().getBlockState(player.blockPosition().below()).getBlock().equals(Blocks.AIR)){
-						player.getLevel().setBlock(player.blockPosition().below(), Config.SidedConfig.getSpawnBlock().defaultBlockState(), 2);
+					BlockPos pos = player.blockPosition().below(1);
+					for(int x = -Config.SidedConfig.getSpawnBlockRadius(); x <= Config.SidedConfig.getSpawnBlockRadius(); x++){
+						for(int z = -Config.SidedConfig.getSpawnBlockRadius(); z <= Config.SidedConfig.getSpawnBlockRadius(); z++){
+							if(player.getLevel().getBlockState(pos.offset(x, 0, z)).getBlock().equals(Blocks.AIR)){
+								player.getLevel().setBlock(pos.offset(x, 0, z), Config.SidedConfig.getSpawnBlock().defaultBlockState(), 2);
+							}
+						}
 					}
 				}
 			}
@@ -83,7 +90,7 @@ public class BaseClass{
 
 	public static class EmptyWorldType extends ForgeWorldPreset {
 		public EmptyWorldType() {
-			super((biomeRegistry, dimensionSettingsRegistry, seed) -> new EmptyWorldChunkGen(new FixedBiomeSource(biomeRegistry.registryOrThrow(Registry.BIOME_REGISTRY).getOrThrow(Biomes.PLAINS))));
+			super((registryAccess, seed, generatorSettings) -> new EmptyWorldChunkGen(registryAccess.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY), new FixedBiomeSource(registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateHolder(Biomes.PLAINS))));
 			setRegistryName(new ResourceLocation(BaseClass.MODID, BaseClass.MODID));
 		}
 
